@@ -5,9 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilechallenge.databinding.FragmentMainBinding
@@ -37,48 +39,21 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = GithubAdapter(mutableListOf())
+        adapter = GithubAdapter()
+
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
 
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-
-                    is RepoUiState.Loading -> {
-                        binding.progressBar.visibility = View.VISIBLE
-                        binding.errorText.visibility = View.GONE
-                    }
-
-                    is RepoUiState.Success -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.errorText.visibility = View.GONE
-                        adapter.addItems(state.repos)
-                    }
-
-                    is RepoUiState.Error -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.errorText.visibility = View.VISIBLE
-                        binding.errorText.text = state.message
-                    }
-                }
-            }
-
-
+        adapter.addLoadStateListener { loadState ->
+            binding.progressBar.isVisible =
+                loadState.source.refresh is LoadState.Loading
         }
 
-        viewModel.loadRepos()
-
-        // Pagination
-        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                val lm = rv.layoutManager as LinearLayoutManager
-                if (lm.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 1) {
-                    viewModel.loadRepos()
-                }
+        lifecycleScope.launch {
+            viewModel.pagingFlow.collectLatest { pagingData ->
+                adapter.submitData(pagingData)
             }
-        })
+        }
     }
 
     override fun onDestroyView() {
