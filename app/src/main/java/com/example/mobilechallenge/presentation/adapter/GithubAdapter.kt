@@ -2,24 +2,31 @@ package com.example.mobilechallenge.presentation.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.mobilechallenge.databinding.ItemRepoBinding
 import com.example.mobilechallenge.domain.model.GithubRepo
 
-class GithubAdapter(private val repos: MutableList<GithubRepo>) :
-    RecyclerView.Adapter<GithubAdapter.RepoViewHolder>() {
+class GithubAdapter :
+    PagingDataAdapter<GithubRepo, GithubAdapter.RepoViewHolder>(DIFF_CALLBACK) {
 
     inner class RepoViewHolder(val binding: ItemRepoBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RepoViewHolder {
-        val binding = ItemRepoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemRepoBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return RepoViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: RepoViewHolder, position: Int) {
-        val repo = repos[position]
+        val repo = getItem(position) ?: return
+
         holder.binding.apply {
             tvRepoName.text = repo.name
             tvDescription.text = repo.description
@@ -29,11 +36,15 @@ class GithubAdapter(private val repos: MutableList<GithubRepo>) :
         }
     }
 
-    override fun getItemCount(): Int = repos.size
+    companion object {
+        val DIFF_CALLBACK = object : DiffUtil.ItemCallback<GithubRepo>() {
+            override fun areItemsTheSame(oldItem: GithubRepo, newItem: GithubRepo): Boolean {
+                return oldItem.name == newItem.name
+            }
 
-    fun addItems(newRepos: List<GithubRepo>) {
-        val start = repos.size
-        repos.addAll(newRepos)
-        notifyItemRangeInserted(start, newRepos.size)
+            override fun areContentsTheSame(oldItem: GithubRepo, newItem: GithubRepo): Boolean {
+                return oldItem == newItem
+            }
+        }
     }
 }

@@ -90,4 +90,7 @@ dependencies {
 
     // Coil (pour charger avatar image)
     implementation("io.coil-kt:coil:2.4.0")
+
+    //paging 3
+    implementation("androidx.paging:paging-runtime-ktx:3.2.1")
 }
