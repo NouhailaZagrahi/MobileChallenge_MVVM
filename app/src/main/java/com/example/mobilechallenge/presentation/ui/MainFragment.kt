@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -41,24 +42,29 @@ class MainFragment : Fragment() {
         binding.recyclerView.adapter = adapter
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.uiState.collectLatest { state ->
-                    when (state) {
 
-                        is RepoUiState.Loading -> {
-                            // afficher progress bar later
-                        }
+            viewModel.uiState.collectLatest { state ->
+                when (state) {
 
-                        is RepoUiState.Success -> {
-                            adapter.addItems(state.repos)
-                        }
+                    is RepoUiState.Loading -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                        binding.errorText.visibility = View.GONE
+                    }
 
-                        is RepoUiState.Error -> {
-                            // afficher message erreur later
-                        }
+                    is RepoUiState.Success -> {
+                        binding.progressBar.visibility = View.GONE
+                        binding.errorText.visibility = View.GONE
+                        adapter.addItems(state.repos)
+                    }
+
+                    is RepoUiState.Error -> {
+                        binding.progressBar.visibility = View.GONE
+                        binding.errorText.visibility = View.VISIBLE
+                        binding.errorText.text = state.message
                     }
                 }
             }
+
 
         }
 
